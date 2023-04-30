@@ -25,7 +25,8 @@ type Client struct {
 	AppSecret   string
 	AppIDToken  string
 
-	Accounts *AccountsService
+	Accounts    *AccountsService
+	AuthService *AuthService
 }
 
 type successResponse struct {
@@ -71,16 +72,17 @@ func NewClient(httpClient *http.Client, appIDToken, appSecret, redirectUri strin
 	// TODO handle error
 	parsedRedirectUri, _ := url.Parse(redirectUri)
 
-	c := Client{
+	c := &Client{
 		client:      httpClient,
 		BaseURL:     baseURL,
 		RedirectURI: parsedRedirectUri,
 		AppIDToken:  appIDToken,
 		AppSecret:   appSecret,
 	}
-	c.Accounts = &AccountsService{client: &c}
+	c.Accounts = &AccountsService{client: c}
+	c.AuthService = &AuthService{client: c}
 
-	return &c
+	return c
 }
 
 func (c *Client) newRequest(method, urlPath string, body interface{}, requestConfigs ...requestConfig) (*http.Request, error) {
