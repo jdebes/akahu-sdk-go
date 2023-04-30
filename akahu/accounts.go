@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"path"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 const accountsPath = "accounts"
@@ -31,11 +33,11 @@ type AccountResponse struct {
 	} `json:"refreshed"`
 	FormattedAccount string `json:"formatted_account"`
 	Balance          struct {
-		Available int    `json:"available"`
-		Currency  string `json:"currency"`
-		Current   int    `json:"current"`
-		Limit     int    `json:"limit"`
-		Overdrawn bool   `json:"overdrawn"`
+		Available decimal.Decimal `json:"available"`
+		Currency  string          `json:"currency"`
+		Current   decimal.Decimal `json:"current"`
+		Limit     decimal.Decimal `json:"limit"`
+		Overdrawn bool            `json:"overdrawn"`
 	} `json:"balance"`
 	Attributes []string `json:"attributes"`
 	Branch     struct {
