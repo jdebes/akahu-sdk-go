@@ -1,0 +1,132 @@
+package akahu
+
+import (
+	"bytes"
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+)
+
+const (
+	jsonContentType = "application/json"
+	defaultBaseURL  = "https://api.akahu.io/v1/"
+	akahuIDHeader   = "X-Akahu-ID"
+)
+
+type Client struct {
+	client *http.Client
+
+	BaseURL     *url.URL
+	RedirectURI *url.URL
+	AppSecret   string
+	AppIDToken  string
+
+	Accounts *AccountsService
+}
+
+type successResponse struct {
+	Success bool `json:"success"`
+}
+
+type itemResponse[T any] struct {
+	successResponse
+	Item T `json:"item"`
+}
+
+type collectionResponse[T any] struct {
+	successResponse
+	Items []T `json:"items"`
+}
+
+type service struct {
+	client *Client
+}
+
+type requestConfig func(req *http.Request, client *Client)
+
+func withTokenRequestConfig(userAccessToken string) requestConfig {
+	return func(req *http.Request, c *Client) {
+		req.Header.Set(akahuIDHeader, c.AppIDToken)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", userAccessToken))
+	}
+}
+
+func withBasicAuthRequestConfig() requestConfig {
+	return func(req *http.Request, c *Client) {
+		credentials := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", c.AppIDToken, c.AppSecret)))
+
+		req.Header.Set("Authorization", fmt.Sprintf("Basic %s", credentials))
+	}
+}
+
+func NewClient(httpClient *http.Client, appIDToken, appSecret, redirectUri string) *Client {
+	if httpClient == nil {
+		httpClient = &http.Client{}
+	}
+	baseURL, _ := url.Parse(defaultBaseURL)
+	// TODO handle error
+	parsedRedirectUri, _ := url.Parse(redirectUri)
+
+	c := Client{
+		client:      httpClient,
+		BaseURL:     baseURL,
+		RedirectURI: parsedRedirectUri,
+		AppIDToken:  appIDToken,
+		AppSecret:   appSecret,
+	}
+	c.Accounts = &AccountsService{client: &c}
+
+	return &c
+}
+
+func (c *Client) newRequest(method, urlPath string, body interface{}, requestConfigs ...requestConfig) (*http.Request, error) {
+	u, err := c.BaseURL.Parse(urlPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var buf io.ReadWriter
+	if body != nil {
+		buf = &bytes.Buffer{}
+		enc := json.NewEncoder(buf)
+		enc.SetEscapeHTML(false)
+		err := enc.Encode(body)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	req, err := http.NewRequest(method, u.String(), buf)
+	if err != nil {
+		return nil, err
+	}
+
+	if body != nil {
+		req.Header.Set("Content-Type", jsonContentType)
+	}
+	req.Header.Set("Accept", jsonContentType)
+
+	for _, rc := range requestConfigs {
+		rc(req, c)
+	}
+
+	return req, nil
+}
+
+func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+	res, err := c.client.Do(req.WithContext(ctx))
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.NewDecoder(res.Body).Decode(v)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
