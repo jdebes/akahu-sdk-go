@@ -22,3 +22,6 @@ go.work
 
 # intellij files
 .idea/
+
+# Dev ignore stuff
+example/dev/
