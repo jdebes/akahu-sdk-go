@@ -24,11 +24,11 @@ func (s *MeService) Get(ctx context.Context, userAccessToken string) (*MeRespons
 		return nil, nil, err
 	}
 
-	var accounts itemResponse[MeResponse]
-	res, err := s.client.do(ctx, r, &accounts)
+	var meResponse itemResponse[MeResponse]
+	res, err := s.client.do(ctx, r, &meResponse)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return &accounts.Item, res, nil
+	return &meResponse.Item, res, nil
 }
