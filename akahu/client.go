@@ -25,9 +25,10 @@ type Client struct {
 	AppSecret   string
 	AppIDToken  string
 
-	Accounts *AccountsService
-	Auth     *AuthService
-	Me       *MeService
+	Accounts    *AccountsService
+	Auth        *AuthService
+	Me          *MeService
+	Connections *ConnectionsService
 }
 
 type successResponse struct {
@@ -83,6 +84,7 @@ func NewClient(httpClient *http.Client, appIDToken, appSecret, redirectUri strin
 	c.Accounts = &AccountsService{client: c}
 	c.Auth = &AuthService{client: c}
 	c.Me = &MeService{client: c}
+	c.Connections = &ConnectionsService{client: c}
 
 	return c
 }
