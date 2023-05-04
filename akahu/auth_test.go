@@ -46,7 +46,7 @@ func TestAuthService_BuildAuthorizationURL(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if actual := client.Auth.BuildAuthorizationURL(test.opts); actual != test.expected {
-				t.Errorf("ACTUAL: %v, EXPECTED: %v", actual, test.expected)
+				t.Errorf("expected %v, actual %v", test.expected, actual)
 			}
 		})
 	}
