@@ -14,6 +14,41 @@ const pendingPath = "pending"
 
 type TransactionsService service
 
+type Merchant struct {
+	Id      string  `json:"_id"`
+	Name    string  `json:"name"`
+	Website *string `json:"website"`
+}
+
+type PersonalFinance struct {
+	Id   string `json:"_id"`
+	Name string `json:"name"`
+}
+
+type Groups struct {
+	PersonalFinance *PersonalFinance `json:"personal_finance"`
+}
+
+type Category struct {
+	Id     string  `json:"_id"`
+	Name   string  `json:"name"`
+	Groups *Groups `json:"groups"`
+}
+
+type Conversion struct {
+	Amount   *decimal.Decimal `json:"amount"`
+	Currency *string          `json:"currency"`
+	Rate     *decimal.Decimal `json:"rate"`
+}
+
+type Meta struct {
+	Particulars  *string     `json:"particulars"`
+	Code         *string     `json:"code"`
+	Reference    *string     `json:"reference"`
+	OtherAccount *string     `json:"other_account"`
+	Conversion   *Conversion `json:"conversion"`
+}
+
 type TransactionResponse struct {
 	Id          string          `json:"_id"`
 	Account     string          `json:"_account"`
@@ -25,32 +60,9 @@ type TransactionResponse struct {
 	Amount      decimal.Decimal `json:"amount"`
 	Balance     decimal.Decimal `json:"balance"`
 	Type        string          `json:"type"`
-	Merchant    *struct {
-		Id      string `json:"_id"`
-		Name    string `json:"name"`
-		Website string `json:"website"`
-	} `json:"merchant"`
-	Category *struct {
-		Id     string `json:"_id"`
-		Name   string `json:"name"`
-		Groups *struct {
-			PersonalFinance *struct {
-				Id   string `json:"_id"`
-				Name string `json:"name"`
-			} `json:"personal_finance"`
-		} `json:"groups"`
-	} `json:"category"`
-	Meta *struct {
-		Particulars  *string `json:"particulars"`
-		Code         *string `json:"code"`
-		Reference    *string `json:"reference"`
-		OtherAccount *string `json:"other_account"`
-		Conversion   *struct {
-			Amount   *decimal.Decimal `json:"amount"`
-			Currency *string          `json:"currency"`
-			Rate     *decimal.Decimal `json:"rate"`
-		} `json:"conversion"`
-	}
+	Merchant    *Merchant       `json:"merchant"`
+	Category    *Category       `json:"category"`
+	Meta        *Meta           `json:"meta"`
 }
 
 func (s *TransactionsService) List(ctx context.Context, userAccessToken string, startTime, endTime time.Time) ([]TransactionResponse, *http.Response, error) {
