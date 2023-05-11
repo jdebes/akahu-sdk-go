@@ -104,7 +104,9 @@ func (s *TransactionsService) GetByIds(ctx context.Context, userAccessToken stri
 }
 
 func (s *TransactionsService) list(ctx context.Context, urlPath, userAccessToken string, startTime, endTime time.Time) ([]TransactionResponse, *http.Response, error) {
-	encodedPath := buildDateRangePath(urlPath, startTime, endTime)
+	params := paramsWithDateRange(startTime, endTime)
+	encodedPath := pathWithParams(urlPath, params)
+
 	r, err := s.client.newRequest(http.MethodGet, encodedPath, nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
 		return nil, nil, err

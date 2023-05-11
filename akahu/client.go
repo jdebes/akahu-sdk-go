@@ -30,6 +30,7 @@ type Client struct {
 	Me           *MeService
 	Connections  *ConnectionsService
 	Transactions *TransactionsService
+	Webhooks     *WebhooksService
 }
 
 type successResponse struct {
@@ -87,6 +88,7 @@ func NewClient(httpClient *http.Client, appIDToken, appSecret, redirectUri strin
 	c.Me = &MeService{client: c}
 	c.Connections = &ConnectionsService{client: c}
 	c.Transactions = &TransactionsService{client: c}
+	c.Webhooks = &WebhooksService{client: c}
 
 	return c
 }
