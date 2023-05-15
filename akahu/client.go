@@ -39,12 +39,23 @@ type successResponse struct {
 
 type itemResponse[T any] struct {
 	successResponse
-	Item T `json:"item"`
+	Item *T `json:"item"`
 }
 
 type collectionResponse[T any] struct {
 	successResponse
 	Items []T `json:"items"`
+}
+
+type errorResponse struct {
+	successResponse
+	Message string `json:"message"`
+}
+
+type APIResponse struct {
+	Success bool
+	Message string
+	*http.Response
 }
 
 type service struct {
@@ -127,16 +138,35 @@ func (c *Client) newRequest(method, urlPath string, body interface{}, requestCon
 	return req, nil
 }
 
-func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*APIResponse, error) {
 	res, err := c.client.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.NewDecoder(res.Body).Decode(v)
+	decoder := json.NewDecoder(res.Body)
+
+	if res.StatusCode >= 200 && res.StatusCode <= 299 {
+		err = decoder.Decode(&v)
+		if err != nil {
+			return nil, err
+		}
+
+		return &APIResponse{
+			Success:  true,
+			Response: res,
+		}, nil
+	}
+
+	var errResp errorResponse
+	err = decoder.Decode(&errResp)
 	if err != nil {
 		return nil, err
 	}
 
-	return res, nil
+	return &APIResponse{
+		Success:  errResp.Success,
+		Message:  errResp.Message,
+		Response: res,
+	}, nil
 }

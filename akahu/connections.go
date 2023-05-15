@@ -17,7 +17,7 @@ type ConnectionResponse struct {
 	Logo string  `json:"logo"`
 }
 
-func (s *ConnectionsService) List(ctx context.Context) ([]ConnectionResponse, *http.Response, error) {
+func (s *ConnectionsService) List(ctx context.Context) ([]ConnectionResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, connectionsPath, nil, withBasicAuthRequestConfig())
 	if err != nil {
 		return nil, nil, err
@@ -32,7 +32,7 @@ func (s *ConnectionsService) List(ctx context.Context) ([]ConnectionResponse, *h
 	return connections.Items, res, nil
 }
 
-func (s *ConnectionsService) Get(ctx context.Context, connectionId string) (*ConnectionResponse, *http.Response, error) {
+func (s *ConnectionsService) Get(ctx context.Context, connectionId string) (*ConnectionResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, path.Join(connectionsPath, connectionId), nil, withBasicAuthRequestConfig())
 	if err != nil {
 		return nil, nil, err
@@ -44,5 +44,5 @@ func (s *ConnectionsService) Get(ctx context.Context, connectionId string) (*Con
 		return nil, nil, err
 	}
 
-	return &connections.Item, res, nil
+	return connections.Item, res, nil
 }

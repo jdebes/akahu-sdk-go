@@ -25,13 +25,16 @@ var (
 
 func TestTransactionsService_Get(t *testing.T) {
 	tests := []struct {
-		name         string
-		jsonResponse string
-		expected     *TransactionResponse
+		name                string
+		jsonResponse        string
+		statusCode          int
+		expected            *TransactionResponse
+		expectedAPIResponse *APIResponse
 	}{
 		{
 			name:         "with unenriched response",
 			jsonResponse: fmt.Sprintf(itemResponseJson, unenrichedTransactionJson),
+			statusCode:   http.StatusOK,
 			expected: &TransactionResponse{
 				Id:          "trans_1111111111111111111111111",
 				Account:     "acc_1111111111111111111111111",
@@ -44,10 +47,12 @@ func TestTransactionsService_Get(t *testing.T) {
 				Balance:     decimal.NewFromInt(100),
 				Type:        "EFTPOS",
 			},
+			expectedAPIResponse: expectedSuccessAPIResponse,
 		},
 		{
 			name:         "with enriched response",
 			jsonResponse: fmt.Sprintf(itemResponseJson, enrichedTransactionJson),
+			statusCode:   http.StatusOK,
 			expected: &TransactionResponse{
 				Id:          "trans_1111111111111111111111111",
 				Account:     "acc_1111111111111111111111111",
@@ -74,44 +79,60 @@ func TestTransactionsService_Get(t *testing.T) {
 					},
 				},
 			},
+			expectedAPIResponse: expectedSuccessAPIResponse,
+		},
+		{
+			name:                "with error response",
+			jsonResponse:        errorResponseJson,
+			statusCode:          http.StatusBadRequest,
+			expected:            nil,
+			expectedAPIResponse: expectedErrorAPIResponse,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			client := setupClient(t, test.jsonResponse, http.MethodGet, func(r *http.Request) {
+			client := setupClient(t, test.jsonResponse, http.MethodGet, test.statusCode, func(r *http.Request) {
 				testTokenRequestHeaders(t, r, "app_token_123", "user_token_1")
 			})
 
-			actual, _, err := client.Transactions.Get(context.TODO(), "user_token_1", "id_1")
+			actual, res, err := client.Transactions.Get(context.TODO(), "user_token_1", "id_1")
 			testClientResponse(t, test.expected, actual, err)
+			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
 		})
 	}
 }
 
 func TestTransactionsService_GetByIds(t *testing.T) {
 	tests := []struct {
-		name         string
-		jsonResponse string
-		ids          []string
-		expected     []TransactionResponse
+		name                string
+		jsonResponse        string
+		ids                 []string
+		statusCode          int
+		expected            []TransactionResponse
+		expectedAPIResponse *APIResponse
 	}{
 		{
-			name:         "with empty response",
-			jsonResponse: fmt.Sprintf(collectionResponseJson, ""),
-			ids:          []string{"id_1"},
-			expected:     []TransactionResponse{},
+			name:                "with empty response",
+			jsonResponse:        fmt.Sprintf(collectionResponseJson, ""),
+			ids:                 []string{"id_1"},
+			statusCode:          http.StatusOK,
+			expected:            []TransactionResponse{},
+			expectedAPIResponse: expectedSuccessAPIResponse,
 		},
 		{
-			name:         "with multiple ids",
-			jsonResponse: fmt.Sprintf(collectionResponseJson, ""),
-			ids:          []string{"id_1", "id_2", "id_3"},
-			expected:     []TransactionResponse{},
+			name:                "with multiple ids",
+			jsonResponse:        fmt.Sprintf(collectionResponseJson, ""),
+			ids:                 []string{"id_1", "id_2", "id_3"},
+			statusCode:          http.StatusOK,
+			expected:            []TransactionResponse{},
+			expectedAPIResponse: expectedSuccessAPIResponse,
 		},
 		{
 			name:         "with single unenriched response",
 			jsonResponse: fmt.Sprintf(collectionResponseJson, unenrichedTransactionJson),
 			ids:          []string{"id_1"},
+			statusCode:   http.StatusOK,
 			expected: []TransactionResponse{
 				{
 					Id:          "trans_1111111111111111111111111",
@@ -126,11 +147,13 @@ func TestTransactionsService_GetByIds(t *testing.T) {
 					Type:        "EFTPOS",
 				},
 			},
+			expectedAPIResponse: expectedSuccessAPIResponse,
 		},
 		{
 			name:         "with single enriched response",
 			jsonResponse: fmt.Sprintf(collectionResponseJson, enrichedTransactionJson),
 			ids:          []string{"id_1"},
+			statusCode:   http.StatusOK,
 			expected: []TransactionResponse{
 				{
 					Id:          "trans_1111111111111111111111111",
@@ -159,12 +182,20 @@ func TestTransactionsService_GetByIds(t *testing.T) {
 					},
 				},
 			},
+			expectedAPIResponse: expectedSuccessAPIResponse,
+		},
+		{
+			name:                "with error response",
+			jsonResponse:        errorResponseJson,
+			statusCode:          http.StatusBadRequest,
+			expected:            nil,
+			expectedAPIResponse: expectedErrorAPIResponse,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			client := setupClient(t, test.jsonResponse, http.MethodPost, func(r *http.Request) {
+			client := setupClient(t, test.jsonResponse, http.MethodPost, test.statusCode, func(r *http.Request) {
 				testTokenRequestHeaders(t, r, "app_token_123", "user_token_1")
 
 				var ids []string
@@ -175,26 +206,32 @@ func TestTransactionsService_GetByIds(t *testing.T) {
 				}
 			})
 
-			actual, _, err := client.Transactions.GetByIds(context.TODO(), "user_token_1", test.ids...)
+			actual, res, err := client.Transactions.GetByIds(context.TODO(), "user_token_1", test.ids...)
 			testClientResponse(t, test.expected, actual, err)
+			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
 		})
 	}
 }
 
 func TestTransactionsService_List(t *testing.T) {
 	tests := []struct {
-		name         string
-		jsonResponse string
-		expected     []TransactionResponse
+		name                string
+		jsonResponse        string
+		statusCode          int
+		expected            []TransactionResponse
+		expectedAPIResponse *APIResponse
 	}{
 		{
-			name:         "with empty response",
-			jsonResponse: fmt.Sprintf(collectionResponseJson, ""),
-			expected:     []TransactionResponse{},
+			name:                "with empty response",
+			jsonResponse:        fmt.Sprintf(collectionResponseJson, ""),
+			statusCode:          http.StatusOK,
+			expected:            []TransactionResponse{},
+			expectedAPIResponse: expectedSuccessAPIResponse,
 		},
 		{
 			name:         "with single unenriched response",
 			jsonResponse: fmt.Sprintf(collectionResponseJson, unenrichedTransactionJson),
+			statusCode:   http.StatusOK,
 			expected: []TransactionResponse{
 				{
 					Id:          "trans_1111111111111111111111111",
@@ -209,10 +246,12 @@ func TestTransactionsService_List(t *testing.T) {
 					Type:        "EFTPOS",
 				},
 			},
+			expectedAPIResponse: expectedSuccessAPIResponse,
 		},
 		{
 			name:         "with single enriched response",
 			jsonResponse: fmt.Sprintf(collectionResponseJson, enrichedTransactionJson),
+			statusCode:   http.StatusOK,
 			expected: []TransactionResponse{
 				{
 					Id:          "trans_1111111111111111111111111",
@@ -241,35 +280,49 @@ func TestTransactionsService_List(t *testing.T) {
 					},
 				},
 			},
+			expectedAPIResponse: expectedSuccessAPIResponse,
+		},
+		{
+			name:                "with error response",
+			jsonResponse:        errorResponseJson,
+			statusCode:          http.StatusBadRequest,
+			expected:            nil,
+			expectedAPIResponse: expectedErrorAPIResponse,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			client := setupClient(t, test.jsonResponse, http.MethodGet, func(r *http.Request) {
+			client := setupClient(t, test.jsonResponse, http.MethodGet, test.statusCode, func(r *http.Request) {
 				testTokenRequestHeaders(t, r, "app_token_123", "user_token_1")
 			})
 
-			actual, _, err := client.Transactions.List(context.TODO(), "user_token_1", time.Now(), time.Now())
+			actual, res, err := client.Transactions.List(context.TODO(), "user_token_1", time.Now(), time.Now())
 			testClientResponse(t, test.expected, actual, err)
+			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
 		})
 	}
 }
 
 func TestTransactionsService_ListPending(t *testing.T) {
 	tests := []struct {
-		name         string
-		jsonResponse string
-		expected     []TransactionResponse
+		name                string
+		jsonResponse        string
+		statusCode          int
+		expected            []TransactionResponse
+		expectedAPIResponse *APIResponse
 	}{
 		{
-			name:         "with empty response",
-			jsonResponse: fmt.Sprintf(collectionResponseJson, ""),
-			expected:     []TransactionResponse{},
+			name:                "with empty response",
+			jsonResponse:        fmt.Sprintf(collectionResponseJson, ""),
+			statusCode:          http.StatusOK,
+			expected:            []TransactionResponse{},
+			expectedAPIResponse: expectedSuccessAPIResponse,
 		},
 		{
 			name:         "with single unenriched response",
 			jsonResponse: fmt.Sprintf(collectionResponseJson, unenrichedTransactionJson),
+			statusCode:   http.StatusOK,
 			expected: []TransactionResponse{
 				{
 					Id:          "trans_1111111111111111111111111",
@@ -284,10 +337,12 @@ func TestTransactionsService_ListPending(t *testing.T) {
 					Type:        "EFTPOS",
 				},
 			},
+			expectedAPIResponse: expectedSuccessAPIResponse,
 		},
 		{
 			name:         "with single enriched response",
 			jsonResponse: fmt.Sprintf(collectionResponseJson, enrichedTransactionJson),
+			statusCode:   http.StatusOK,
 			expected: []TransactionResponse{
 				{
 					Id:          "trans_1111111111111111111111111",
@@ -316,17 +371,26 @@ func TestTransactionsService_ListPending(t *testing.T) {
 					},
 				},
 			},
+			expectedAPIResponse: expectedSuccessAPIResponse,
+		},
+		{
+			name:                "with error response",
+			jsonResponse:        errorResponseJson,
+			statusCode:          http.StatusBadRequest,
+			expected:            nil,
+			expectedAPIResponse: expectedErrorAPIResponse,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			client := setupClient(t, test.jsonResponse, http.MethodGet, func(r *http.Request) {
+			client := setupClient(t, test.jsonResponse, http.MethodGet, test.statusCode, func(r *http.Request) {
 				testTokenRequestHeaders(t, r, "app_token_123", "user_token_1")
 			})
 
-			actual, _, err := client.Transactions.ListPending(context.TODO(), "user_token_1", time.Now(), time.Now())
+			actual, res, err := client.Transactions.ListPending(context.TODO(), "user_token_1", time.Now(), time.Now())
 			testClientResponse(t, test.expected, actual, err)
+			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
 		})
 	}
 }

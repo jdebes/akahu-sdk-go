@@ -18,7 +18,7 @@ type MeResponse struct {
 	PreferredName *string    `json:"preferred_name"`
 }
 
-func (s *MeService) Get(ctx context.Context, userAccessToken string) (*MeResponse, *http.Response, error) {
+func (s *MeService) Get(ctx context.Context, userAccessToken string) (*MeResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, "me", nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
 		return nil, nil, err
@@ -30,5 +30,5 @@ func (s *MeService) Get(ctx context.Context, userAccessToken string) (*MeRespons
 		return nil, nil, err
 	}
 
-	return &meResponse.Item, res, nil
+	return meResponse.Item, res, nil
 }

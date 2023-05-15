@@ -51,7 +51,7 @@ type WebhookSubscribeRequest struct {
 
 type WebhookSubscribeResponse struct {
 	successResponse
-	ItemId string `json:"item_id"`
+	ItemId *string `json:"item_id"`
 }
 
 type WebHookEventPayload struct {
@@ -70,7 +70,7 @@ type WebHookEventResponse struct {
 	Payload      WebHookEventPayload `json:"payload"`
 }
 
-func (s *WebhooksService) List(ctx context.Context, userAccessToken string) ([]WebhookResponse, *http.Response, error) {
+func (s *WebhooksService) List(ctx context.Context, userAccessToken string) ([]WebhookResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, webhooksPath, nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
 		return nil, nil, err
@@ -85,7 +85,7 @@ func (s *WebhooksService) List(ctx context.Context, userAccessToken string) ([]W
 	return webhooks.Items, res, nil
 }
 
-func (s *WebhooksService) GetPublicKey(ctx context.Context) (*string, *http.Response, error) {
+func (s *WebhooksService) GetPublicKey(ctx context.Context) (*string, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, publicKeyPath, nil, withBasicAuthRequestConfig())
 	if err != nil {
 		return nil, nil, err
@@ -97,10 +97,10 @@ func (s *WebhooksService) GetPublicKey(ctx context.Context) (*string, *http.Resp
 		return nil, nil, err
 	}
 
-	return &publicKey.Item, res, nil
+	return publicKey.Item, res, nil
 }
 
-func (s *WebhooksService) ListEvents(ctx context.Context, userAccessToken, status string, startTime, endTime time.Time) ([]WebHookEventResponse, *http.Response, error) {
+func (s *WebhooksService) ListEvents(ctx context.Context, userAccessToken, status string, startTime, endTime time.Time) ([]WebHookEventResponse, *APIResponse, error) {
 	params := paramsWithDateRange(startTime, endTime)
 	params.Add("status", status)
 	encodedPath := pathWithParams(webhookEventsPath, params)
@@ -119,7 +119,7 @@ func (s *WebhooksService) ListEvents(ctx context.Context, userAccessToken, statu
 	return events.Items, res, nil
 }
 
-func (s *WebhooksService) Subscribe(ctx context.Context, userAccessToken string, body WebhookSubscribeRequest) (*string, *http.Response, error) {
+func (s *WebhooksService) Subscribe(ctx context.Context, userAccessToken string, body WebhookSubscribeRequest) (*string, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodPost, webhooksPath, body, withTokenRequestConfig(userAccessToken))
 	if err != nil {
 		return nil, nil, err
@@ -131,10 +131,10 @@ func (s *WebhooksService) Subscribe(ctx context.Context, userAccessToken string,
 		return nil, nil, err
 	}
 
-	return &webhookSubscribe.ItemId, res, nil
+	return webhookSubscribe.ItemId, res, nil
 }
 
-func (s *WebhooksService) Unsubscribe(ctx context.Context, userAccessToken, id string) (bool, *http.Response, error) {
+func (s *WebhooksService) Unsubscribe(ctx context.Context, userAccessToken, id string) (bool, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodDelete, path.Join(webhooksPath, id), nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
 		return false, nil, err

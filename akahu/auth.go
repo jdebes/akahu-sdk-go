@@ -35,7 +35,7 @@ type AuthorizationURLOptions struct {
 	State        *string
 }
 
-func (s *AuthService) Exchange(ctx context.Context, code string) (*ExchangeResponse, *http.Response, error) {
+func (s *AuthService) Exchange(ctx context.Context, code string) (*ExchangeResponse, *APIResponse, error) {
 	body := exchangeRequest{
 		Code:         code,
 		RedirectURI:  s.client.RedirectURI.String(),
@@ -57,7 +57,7 @@ func (s *AuthService) Exchange(ctx context.Context, code string) (*ExchangeRespo
 	return &exchangeResponse, res, nil
 }
 
-func (s *AuthService) RevokeToken(ctx context.Context, userAccessToken string) (bool, *http.Response, error) {
+func (s *AuthService) RevokeToken(ctx context.Context, userAccessToken string) (bool, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodDelete, authPath, nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
 		return false, nil, err

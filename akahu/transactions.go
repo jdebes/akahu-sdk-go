@@ -65,15 +65,15 @@ type TransactionResponse struct {
 	Meta        *Meta           `json:"meta"`
 }
 
-func (s *TransactionsService) List(ctx context.Context, userAccessToken string, startTime, endTime time.Time) ([]TransactionResponse, *http.Response, error) {
+func (s *TransactionsService) List(ctx context.Context, userAccessToken string, startTime, endTime time.Time) ([]TransactionResponse, *APIResponse, error) {
 	return s.list(ctx, transactionsPath, userAccessToken, startTime, endTime)
 }
 
-func (s *TransactionsService) ListPending(ctx context.Context, userAccessToken string, startTime, endTime time.Time) ([]TransactionResponse, *http.Response, error) {
+func (s *TransactionsService) ListPending(ctx context.Context, userAccessToken string, startTime, endTime time.Time) ([]TransactionResponse, *APIResponse, error) {
 	return s.list(ctx, path.Join(transactionsPath, pendingPath), userAccessToken, startTime, endTime)
 }
 
-func (s *TransactionsService) Get(ctx context.Context, userAccessToken, id string) (*TransactionResponse, *http.Response, error) {
+func (s *TransactionsService) Get(ctx context.Context, userAccessToken, id string) (*TransactionResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, path.Join(transactionsPath, id), nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
 		return nil, nil, err
@@ -85,10 +85,10 @@ func (s *TransactionsService) Get(ctx context.Context, userAccessToken, id strin
 		return nil, nil, err
 	}
 
-	return &accounts.Item, res, nil
+	return accounts.Item, res, nil
 }
 
-func (s *TransactionsService) GetByIds(ctx context.Context, userAccessToken string, ids ...string) ([]TransactionResponse, *http.Response, error) {
+func (s *TransactionsService) GetByIds(ctx context.Context, userAccessToken string, ids ...string) ([]TransactionResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodPost, path.Join(transactionsPath, "ids"), ids, withTokenRequestConfig(userAccessToken))
 	if err != nil {
 		return nil, nil, err
@@ -103,7 +103,7 @@ func (s *TransactionsService) GetByIds(ctx context.Context, userAccessToken stri
 	return accounts.Items, res, nil
 }
 
-func (s *TransactionsService) list(ctx context.Context, urlPath, userAccessToken string, startTime, endTime time.Time) ([]TransactionResponse, *http.Response, error) {
+func (s *TransactionsService) list(ctx context.Context, urlPath, userAccessToken string, startTime, endTime time.Time) ([]TransactionResponse, *APIResponse, error) {
 	params := paramsWithDateRange(startTime, endTime)
 	encodedPath := pathWithParams(urlPath, params)
 

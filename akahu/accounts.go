@@ -48,7 +48,7 @@ type AccountResponse struct {
 	Type string `json:"type"`
 }
 
-func (s *AccountsService) List(ctx context.Context, userAccessToken string) ([]AccountResponse, *http.Response, error) {
+func (s *AccountsService) List(ctx context.Context, userAccessToken string) ([]AccountResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, accountsPath, nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
 		return nil, nil, err
@@ -63,7 +63,7 @@ func (s *AccountsService) List(ctx context.Context, userAccessToken string) ([]A
 	return accounts.Items, res, nil
 }
 
-func (s *AccountsService) Get(ctx context.Context, userAccessToken, ID string) (*AccountResponse, *http.Response, error) {
+func (s *AccountsService) Get(ctx context.Context, userAccessToken, ID string) (*AccountResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, path.Join(accountsPath, ID), nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
 		return nil, nil, err
@@ -75,10 +75,10 @@ func (s *AccountsService) Get(ctx context.Context, userAccessToken, ID string) (
 		return nil, nil, err
 	}
 
-	return &accounts.Item, res, nil
+	return accounts.Item, res, nil
 }
 
-func (s *AccountsService) Revoke(ctx context.Context, userAccessToken, ID string) (bool, *http.Response, error) {
+func (s *AccountsService) Revoke(ctx context.Context, userAccessToken, ID string) (bool, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodDelete, path.Join(accountsPath, ID), nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
 		return false, nil, err

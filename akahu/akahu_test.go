@@ -12,6 +12,17 @@ import (
 const (
 	itemResponseJson       = "{ \"success\": true, \"item\": %s }"
 	collectionResponseJson = "{ \"success\": true, \"items\": [%s] }"
+	errorResponseJson      = "{ \"success\": false, \"message\": \"Error\" }"
+)
+
+var (
+	expectedErrorAPIResponse = &APIResponse{
+		Success: false,
+		Message: "Error",
+	}
+	expectedSuccessAPIResponse = &APIResponse{
+		Success: true,
+	}
 )
 
 type clientTest func(r *http.Request)
@@ -22,7 +33,7 @@ func (fn RoundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
 	return fn(r)
 }
 
-func setupClient(t *testing.T, mockedResponse, expectedHttpMethod string, clientTests ...clientTest) *Client {
+func setupClient(t *testing.T, mockedResponse, expectedHttpMethod string, respStatus int, clientTests ...clientTest) *Client {
 	mockHttpClient := http.Client{Transport: RoundTripFunc(func(req *http.Request) (*http.Response, error) {
 		if method := req.Method; method != expectedHttpMethod {
 			t.Fatalf("expected method %s, actual %s", expectedHttpMethod, method)
@@ -33,7 +44,7 @@ func setupClient(t *testing.T, mockedResponse, expectedHttpMethod string, client
 		}
 
 		return &http.Response{
-			StatusCode: http.StatusOK,
+			StatusCode: respStatus,
 			Body:       io.NopCloser(strings.NewReader(mockedResponse)),
 		}, nil
 	})}
@@ -68,5 +79,19 @@ func testClientResponse(t *testing.T, expected, actual interface{}, err error) {
 
 	if !reflect.DeepEqual(expected, actual) {
 		t.Fatalf("expected %+v, actual %+v", expected, actual)
+	}
+}
+
+func testClientAPIResponse(t *testing.T, expected, actual *APIResponse, err error) {
+	if err != nil {
+		t.Fatalf("client request returned err %v", err)
+	}
+
+	if expected.Success != actual.Success {
+		t.Fatalf("expected APIResponse Success %t, actual %t", expected.Success, actual.Success)
+	}
+
+	if expected.Message != actual.Message {
+		t.Fatalf("expected APIResponse Message %s, actual %s", expected.Message, actual.Message)
 	}
 }

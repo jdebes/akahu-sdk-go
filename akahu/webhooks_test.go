@@ -12,40 +12,51 @@ import (
 
 func TestWebhooksService_Unsubscribe(t *testing.T) {
 	tests := []struct {
-		name         string
-		jsonResponse string
-		expected     bool
+		name                string
+		jsonResponse        string
+		statusCode          int
+		expected            bool
+		expectedAPIResponse *APIResponse
 	}{
 		{
-			name:         "with success response",
-			jsonResponse: "{ \"success\": true }",
-			expected:     true,
+			name:                "with success response",
+			jsonResponse:        "{ \"success\": true }",
+			statusCode:          http.StatusOK,
+			expected:            true,
+			expectedAPIResponse: expectedSuccessAPIResponse,
 		},
 		{
-			name:         "with fail response",
-			jsonResponse: "{ \"success\": false }",
-			expected:     false,
+			name:                "with error response",
+			jsonResponse:        errorResponseJson,
+			statusCode:          http.StatusBadRequest,
+			expected:            false,
+			expectedAPIResponse: expectedErrorAPIResponse,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			client := setupClient(t, test.jsonResponse, http.MethodDelete, func(r *http.Request) {
+			client := setupClient(t, test.jsonResponse, http.MethodDelete, test.statusCode, func(r *http.Request) {
 				testTokenRequestHeaders(t, r, "app_token_123", "user_token_1")
 			})
 
-			actual, _, err := client.Webhooks.Unsubscribe(context.TODO(), "user_token_1", "id_1")
+			actual, res, err := client.Webhooks.Unsubscribe(context.TODO(), "user_token_1", "id_1")
 			testClientResponse(t, test.expected, actual, err)
+			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
 		})
 	}
 }
 
 func TestWebhooksService_Subscribe(t *testing.T) {
+	expectedId := "hook_1111111111111111111111111"
+
 	tests := []struct {
-		name         string
-		body         WebhookSubscribeRequest
-		jsonResponse string
-		expected     string
+		name                string
+		body                WebhookSubscribeRequest
+		jsonResponse        string
+		statusCode          int
+		expected            *string
+		expectedAPIResponse *APIResponse
 	}{
 		{
 			name: "with success response",
@@ -53,14 +64,27 @@ func TestWebhooksService_Subscribe(t *testing.T) {
 				WebhookType: Token,
 				State:       "state123",
 			},
-			jsonResponse: "{\"success\": true, \"item_id\": \"hook_1111111111111111111111111\" }",
-			expected:     "hook_1111111111111111111111111",
+			jsonResponse:        "{\"success\": true, \"item_id\": \"hook_1111111111111111111111111\" }",
+			statusCode:          http.StatusOK,
+			expected:            &expectedId,
+			expectedAPIResponse: expectedSuccessAPIResponse,
+		},
+		{
+			name: "with error response",
+			body: WebhookSubscribeRequest{
+				WebhookType: Token,
+				State:       "state123",
+			},
+			jsonResponse:        errorResponseJson,
+			statusCode:          http.StatusBadRequest,
+			expected:            nil,
+			expectedAPIResponse: expectedErrorAPIResponse,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			client := setupClient(t, test.jsonResponse, http.MethodPost, func(r *http.Request) {
+			client := setupClient(t, test.jsonResponse, http.MethodPost, test.statusCode, func(r *http.Request) {
 				testTokenRequestHeaders(t, r, "app_token_123", "user_token_1")
 
 				var body WebhookSubscribeRequest
@@ -72,8 +96,9 @@ func TestWebhooksService_Subscribe(t *testing.T) {
 
 			})
 
-			actual, _, err := client.Webhooks.Subscribe(context.TODO(), "user_token_1", test.body)
-			testClientResponse(t, test.expected, *actual, err)
+			actual, res, err := client.Webhooks.Subscribe(context.TODO(), "user_token_1", test.body)
+			testClientResponse(t, test.expected, actual, err)
+			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
 		})
 	}
 }
@@ -86,18 +111,23 @@ func TestAccountsService_List(t *testing.T) {
 	lastFailedAt, _ := time.Parse(time.RFC3339, "2020-04-10T23:15:39.917Z")
 
 	tests := []struct {
-		name         string
-		jsonResponse string
-		expected     []WebhookResponse
+		name                string
+		jsonResponse        string
+		statusCode          int
+		expected            []WebhookResponse
+		expectedAPIResponse *APIResponse
 	}{
 		{
-			name:         "with empty response",
-			jsonResponse: fmt.Sprintf(collectionResponseJson, ""),
-			expected:     []WebhookResponse{},
+			name:                "with empty response",
+			jsonResponse:        fmt.Sprintf(collectionResponseJson, ""),
+			statusCode:          http.StatusOK,
+			expected:            []WebhookResponse{},
+			expectedAPIResponse: expectedSuccessAPIResponse,
 		},
 		{
 			name:         "with single response item",
 			jsonResponse: fmt.Sprintf(collectionResponseJson, webhookJson),
+			statusCode:   http.StatusOK,
 			expected: []WebhookResponse{
 				{
 					Id:           "hook_1111111111111111111111111",
@@ -108,17 +138,26 @@ func TestAccountsService_List(t *testing.T) {
 					Url:          "https://webhooks.myapp.com/akahu",
 				},
 			},
+			expectedAPIResponse: expectedSuccessAPIResponse,
+		},
+		{
+			name:                "with error response",
+			jsonResponse:        errorResponseJson,
+			statusCode:          http.StatusBadRequest,
+			expected:            nil,
+			expectedAPIResponse: expectedErrorAPIResponse,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			client := setupClient(t, test.jsonResponse, http.MethodGet, func(r *http.Request) {
+			client := setupClient(t, test.jsonResponse, http.MethodGet, test.statusCode, func(r *http.Request) {
 				testTokenRequestHeaders(t, r, "app_token_123", "user_token_1")
 			})
 
-			actual, _, err := client.Webhooks.List(context.TODO(), "user_token_1")
+			actual, res, err := client.Webhooks.List(context.TODO(), "user_token_1")
 			testClientResponse(t, test.expected, actual, err)
+			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
 		})
 	}
 }
@@ -126,12 +165,40 @@ func TestAccountsService_List(t *testing.T) {
 func TestWebhooksService_GetPublicKey(t *testing.T) {
 	publicKey := "-----BEGIN RSA PUBLIC KEY----- { PEM ENCODED PUBLIC KEY } -----END RSA PUBLIC KEY-----"
 
-	client := setupClient(t, fmt.Sprintf(itemResponseJson, "\""+publicKey+"\""), http.MethodGet, func(r *http.Request) {
-		testBasicRequestHeaders(t, r)
-	})
+	tests := []struct {
+		name                string
+		jsonResponse        string
+		statusCode          int
+		expected            *string
+		expectedAPIResponse *APIResponse
+	}{
+		{
+			name:                "with valid public key response",
+			jsonResponse:        fmt.Sprintf(itemResponseJson, "\""+publicKey+"\""),
+			statusCode:          http.StatusOK,
+			expected:            &publicKey,
+			expectedAPIResponse: expectedSuccessAPIResponse,
+		},
+		{
+			name:                "with error response",
+			jsonResponse:        errorResponseJson,
+			statusCode:          http.StatusBadRequest,
+			expected:            nil,
+			expectedAPIResponse: expectedErrorAPIResponse,
+		},
+	}
 
-	actual, _, err := client.Webhooks.GetPublicKey(context.TODO())
-	testClientResponse(t, &publicKey, actual, err)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			client := setupClient(t, test.jsonResponse, http.MethodGet, test.statusCode, func(r *http.Request) {
+				testBasicRequestHeaders(t, r)
+			})
+
+			actual, res, err := client.Webhooks.GetPublicKey(context.TODO())
+			testClientResponse(t, test.expected, actual, err)
+			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
+		})
+	}
 }
 
 func TestWebhooksService_GetEvents(t *testing.T) {
@@ -142,20 +209,24 @@ func TestWebhooksService_GetEvents(t *testing.T) {
 	lastFailedAt, _ := time.Parse(time.RFC3339, "2020-04-10T23:15:39.917Z")
 
 	tests := []struct {
-		name         string
-		status       string
-		startTime    string
-		endTime      string
-		jsonResponse string
-		expected     []WebHookEventResponse
+		name                string
+		status              string
+		startTime           string
+		endTime             string
+		jsonResponse        string
+		statusCode          int
+		expected            []WebHookEventResponse
+		expectedAPIResponse *APIResponse
 	}{
 		{
-			name:         "with empty response",
-			status:       "test_1234",
-			startTime:    "2020-10-01T00:00:00Z",
-			endTime:      "2020-10-05T00:00:00Z",
-			jsonResponse: fmt.Sprintf(collectionResponseJson, ""),
-			expected:     []WebHookEventResponse{},
+			name:                "with empty response",
+			status:              "test_1234",
+			startTime:           "2020-10-01T00:00:00Z",
+			endTime:             "2020-10-05T00:00:00Z",
+			jsonResponse:        fmt.Sprintf(collectionResponseJson, ""),
+			statusCode:          http.StatusOK,
+			expected:            []WebHookEventResponse{},
+			expectedAPIResponse: expectedSuccessAPIResponse,
 		},
 		{
 			name:         "with single response item",
@@ -163,6 +234,7 @@ func TestWebhooksService_GetEvents(t *testing.T) {
 			startTime:    "2020-10-01T00:00:00Z",
 			endTime:      "2020-10-05T00:00:00Z",
 			jsonResponse: fmt.Sprintf(collectionResponseJson, jsonResponse),
+			statusCode:   http.StatusOK,
 			expected: []WebHookEventResponse{
 				{
 					Id:           "hook_1111111111111111111111111",
@@ -180,12 +252,23 @@ func TestWebhooksService_GetEvents(t *testing.T) {
 					},
 				},
 			},
+			expectedAPIResponse: expectedSuccessAPIResponse,
+		},
+		{
+			name:                "with error response",
+			status:              "test_1234",
+			startTime:           "2020-10-01T00:00:00Z",
+			endTime:             "2020-10-05T00:00:00Z",
+			jsonResponse:        errorResponseJson,
+			statusCode:          http.StatusBadRequest,
+			expected:            nil,
+			expectedAPIResponse: expectedErrorAPIResponse,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			client := setupClient(t, test.jsonResponse, http.MethodGet, func(r *http.Request) {
+			client := setupClient(t, test.jsonResponse, http.MethodGet, test.statusCode, func(r *http.Request) {
 				testTokenRequestHeaders(t, r, "app_token_123", "user_token_1")
 
 				params := r.URL.Query()
@@ -206,8 +289,9 @@ func TestWebhooksService_GetEvents(t *testing.T) {
 
 			start, _ := time.Parse(time.RFC3339, test.startTime)
 			end, _ := time.Parse(time.RFC3339, test.endTime)
-			actual, _, err := client.Webhooks.ListEvents(context.TODO(), "user_token_1", test.status, start, end)
+			actual, res, err := client.Webhooks.ListEvents(context.TODO(), "user_token_1", test.status, start, end)
 			testClientResponse(t, test.expected, actual, err)
+			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
 		})
 	}
 }
