@@ -77,8 +77,18 @@ func testClientResponse(t *testing.T, expected, actual interface{}, err error) {
 		t.Fatalf("client request returned err %v", err)
 	}
 
+	expectedCmp := expected
+	if expectedRaw := reflect.ValueOf(expected); expectedRaw.Kind() == reflect.Ptr {
+		expectedCmp = expectedRaw.Elem()
+	}
+
+	actualCmp := actual
+	if actualRaw := reflect.ValueOf(actual); actualRaw.Kind() == reflect.Ptr {
+		actualCmp = actualRaw.Elem()
+	}
+
 	if !reflect.DeepEqual(expected, actual) {
-		t.Fatalf("expected %+v, actual %+v", expected, actual)
+		t.Fatalf("expected %+v, actual %+v", expectedCmp, actualCmp)
 	}
 }
 
