@@ -2,6 +2,14 @@ package akahu
 
 import (
 	"context"
+	"crypto"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
+	"errors"
+	"io"
 	"net/http"
 	"path"
 	"time"
@@ -147,4 +155,29 @@ func (s *WebhooksService) Unsubscribe(ctx context.Context, userAccessToken, id s
 	}
 
 	return webhookDelete.Success, res, nil
+}
+
+func ValidateWebhookSignature(publicKey, signature string, body io.ReadCloser) (bool, error) {
+	block, _ := pem.Decode([]byte(publicKey))
+	if block == nil {
+		return false, errors.New("ssh: no key found")
+	}
+
+	pub, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	if err != nil {
+		return false, err
+	}
+
+	rawBody, err := io.ReadAll(body)
+	if err != nil {
+		return false, err
+	}
+	hash := sha256.Sum256(rawBody)
+
+	decodedSignature, err := base64.StdEncoding.DecodeString(signature)
+	if err != nil {
+		return false, err
+	}
+
+	return rsa.VerifyPKCS1v15(pub, crypto.SHA256, hash[:], decodedSignature) == nil, nil
 }

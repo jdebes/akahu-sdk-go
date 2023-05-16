@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -292,6 +294,68 @@ func TestWebhooksService_GetEvents(t *testing.T) {
 			actual, res, err := client.Webhooks.ListEvents(context.TODO(), "user_token_1", test.status, start, end)
 			testClientResponse(t, test.expected, actual, err)
 			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
+		})
+	}
+}
+
+func TestValidateWebhookSignature(t *testing.T) {
+	validPub := "-----BEGIN RSA PUBLIC KEY-----\nMIIBCgKCAQEA1YWQaS5H27EvO3JNOH9nrl9SSSQspFWvoYy/jk9Z/4UhsXPg9S8s\ncXKPSVsZb78DXQs8EZDQBHWlVU1VKxtP7fL8EW0bcer0HIuwxKIYMP9IHdmbzOOg\nLJC8l2YNn7FqUKE1ltJgLct4UqyTF11jQdKHfhBV9DXtUP9vaFNfFzK1zEwKGggD\nsVkwFyna7UoW37l5ynV0BPTaVXZ6sVWoyvxjorcLqjUBCgIcGyHXkAxElsPSBRbE\nkydSvePKhe06tn6Ng+PPPJUIKzKMdB3cjKmi5Gsf7JIKRFDoY35oZsoYIRwsgujS\n9uFIlDoe0N44XuyXBtLnO2DrJ2yVKkUl/QIDAQAB\n-----END RSA PUBLIC KEY-----"
+	validSig := "FFcDepzALfLqD2Ljua+A1l3eZXHgUpTLWhGQC9OfYeWZX09JwF41F+T/lnKS/P8wP9Ox5eKFU8zhcnjLZ6qJUHgKtUbWUnepynM9bWi6WrkG36sbgsKeg0F0VTkM7SDFy93Vx0rNoJSCt/u87fNpOvEwIn7S7zoVlp5LfwXyispBVM3WpfMs/SDebj2CY3Ir/jqAUmNSTON0rn8+m4My6UKPBAwQCmlHzN4+1zjIJjvWc5Ez78mJUyEfx1qmM1VW2gbWYT3HuVjmGuNrPYQxuIHW6n7q31cKsa/OEVWixxzcUH3MtZvn/LeTMpKg2FmNNfVYUTkd67VxWDj179gm2A=="
+	body := "{\"webhook_type\":\"ACCOUNT\",\"webhook_code\":\"UPDATE\",\"state\":\"example state\",\"item_id\":\"acc_1111111111111111111111111\",\"updated_fields\":[\"balance\"]}"
+
+	tests := []struct {
+		name        string
+		publicKey   string
+		signature   string
+		body        string
+		expected    bool
+		expectedErr bool
+	}{
+		{
+			name:        "with valid key and signature",
+			publicKey:   validPub,
+			signature:   validSig,
+			body:        body,
+			expected:    true,
+			expectedErr: false,
+		},
+		{
+			name:        "with invalid signature",
+			publicKey:   validPub,
+			signature:   "g+A/e8ud9eDpQNva8RxE7h0Y+8HWIeR+Q6Lefv5R4D8HuPdpBtLgPzgkWPxmQo9mKHYm5iq3apGB95Gu/gFuO8XkVYYx80b0jR8rX6QWWfhBR7MkWIFD1paaKMwXJLfWiqP/3FbMSC7rrE/iOipuZaXRYWW6393jAgtinwzv4OsNYGWNFSeXiTkgcsMDH842t7YvX5GeeT5iT/iQxlflBpkXjmcmAaG2ba2YM/5iU7JjIrvwtZis2Vr196sA+lZKmsp8YnlZ9r++cfaPdAl48GUyHdBxDWt8SM09X7pfdbnMJccExszdR1Mx+aBXRVJs/+3fd2tC5ostDwplrH1CmQ==",
+			body:        body,
+			expected:    false,
+			expectedErr: false,
+		},
+		{
+			name:        "with corrupt public key",
+			publicKey:   "bad key",
+			signature:   validSig,
+			body:        body,
+			expected:    false,
+			expectedErr: true,
+		},
+		{
+			name:        "with incorrect public key type",
+			publicKey:   "-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAL6xs9JmvgpdabCm8aXFCQH8KSGr/smD\n84Q7KTe0TFSX7rHRcS0XEWkLYgJapUNr7BYDeGTuoM/FYH98V17kL2MCAwEAAQ==\n-----END PUBLIC KEY-----",
+			signature:   validSig,
+			body:        body,
+			expected:    false,
+			expectedErr: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual, err := ValidateWebhookSignature(test.publicKey, test.signature, io.NopCloser(strings.NewReader(test.body)))
+			gotError := err != nil
+			if test.expectedErr != gotError {
+				t.Fatalf("expected error %+v, actual %+v", test.expectedErr, gotError)
+			}
+
+			if actual != test.expected {
+				t.Fatalf("expected %+v, actual %+v", test.expected, actual)
+			}
 		})
 	}
 }
