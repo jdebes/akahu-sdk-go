@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 )
@@ -347,7 +345,7 @@ func TestValidateWebhookSignature(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual, err := ValidateWebhookSignature(test.publicKey, test.signature, io.NopCloser(strings.NewReader(test.body)))
+			actual, err := ValidateWebhookSignature(test.publicKey, test.signature, []byte(body))
 			gotError := err != nil
 			if test.expectedErr != gotError {
 				t.Fatalf("expected error %+v, actual %+v", test.expectedErr, gotError)
