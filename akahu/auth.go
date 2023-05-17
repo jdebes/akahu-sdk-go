@@ -13,11 +13,18 @@ const (
 
 type AuthService service
 
+type grantType string
+
+const (
+	authCode grantType = "authorization_code"
+)
+
 type exchangeRequest struct {
-	Code         string `json:"code"`
-	RedirectURI  string `json:"redirect_uri"`
-	ClientID     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
+	GrantType    grantType `json:"grant_type"`
+	Code         string    `json:"code"`
+	RedirectURI  string    `json:"redirect_uri"`
+	ClientID     string    `json:"client_id"`
+	ClientSecret string    `json:"client_secret"`
 }
 
 type ExchangeResponse struct {
@@ -37,6 +44,7 @@ type AuthorizationURLOptions struct {
 
 func (s *AuthService) Exchange(ctx context.Context, code string) (*ExchangeResponse, *APIResponse, error) {
 	body := exchangeRequest{
+		GrantType:    authCode,
 		Code:         code,
 		RedirectURI:  s.client.RedirectURI.String(),
 		ClientID:     s.client.AppIDToken,
