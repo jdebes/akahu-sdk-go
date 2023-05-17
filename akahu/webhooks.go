@@ -92,8 +92,8 @@ func (s *WebhooksService) List(ctx context.Context, userAccessToken string) ([]W
 	return webhooks.Items, res, nil
 }
 
-func (s *WebhooksService) GetPublicKey(ctx context.Context) (*string, *APIResponse, error) {
-	r, err := s.client.newRequest(http.MethodGet, publicKeyPath, nil, withBasicAuthRequestConfig())
+func (s *WebhooksService) GetPublicKey(ctx context.Context, id string) (*string, *APIResponse, error) {
+	r, err := s.client.newRequest(http.MethodGet, path.Join(publicKeyPath, id), nil, withBasicAuthRequestConfig())
 	if err != nil {
 		return nil, nil, err
 	}

@@ -194,7 +194,7 @@ func TestWebhooksService_GetPublicKey(t *testing.T) {
 				testBasicRequestHeaders(t, r)
 			})
 
-			actual, res, err := client.Webhooks.GetPublicKey(context.TODO())
+			actual, res, err := client.Webhooks.GetPublicKey(context.TODO(), "id_1")
 			testClientResponse(t, test.expected, actual, err)
 			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
 		})
