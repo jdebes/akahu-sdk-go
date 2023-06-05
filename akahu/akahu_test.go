@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	itemResponseJson       = "{ \"success\": true, \"item\": %s }"
-	collectionResponseJson = "{ \"success\": true, \"items\": [%s] }"
-	errorResponseJson      = "{ \"success\": false, \"message\": \"Error\" }"
+	itemResponseJson             = "{ \"success\": true, \"item\": %s }"
+	collectionResponseJson       = "{ \"success\": true, \"items\": [%s] }"
+	errorResponseJsonWithMessage = "{ \"success\": false, \"message\": \"Error\" }"
+	errorResponseJsonWithError   = "{ \"success\": false, \"error\": \"Error\" }"
 )
 
 var (

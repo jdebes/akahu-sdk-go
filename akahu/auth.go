@@ -28,7 +28,6 @@ type exchangeRequest struct {
 }
 
 type ExchangeResponse struct {
-	successResponse
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
 	Scope       string `json:"scope"`
@@ -60,6 +59,10 @@ func (s *AuthService) Exchange(ctx context.Context, code string) (*ExchangeRespo
 	res, err := s.client.do(ctx, r, &exchangeResponse)
 	if err != nil {
 		return nil, nil, err
+	}
+
+	if !res.Success {
+		return nil, res, nil
 	}
 
 	return &exchangeResponse, res, nil

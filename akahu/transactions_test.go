@@ -83,7 +83,7 @@ func TestTransactionsService_Get(t *testing.T) {
 		},
 		{
 			name:                "with error response",
-			jsonResponse:        errorResponseJson,
+			jsonResponse:        errorResponseJsonWithMessage,
 			statusCode:          http.StatusBadRequest,
 			expected:            nil,
 			expectedAPIResponse: expectedErrorAPIResponse,
@@ -186,7 +186,7 @@ func TestTransactionsService_GetByIds(t *testing.T) {
 		},
 		{
 			name:                "with error response",
-			jsonResponse:        errorResponseJson,
+			jsonResponse:        errorResponseJsonWithMessage,
 			statusCode:          http.StatusBadRequest,
 			expected:            nil,
 			expectedAPIResponse: expectedErrorAPIResponse,
@@ -284,7 +284,7 @@ func TestTransactionsService_List(t *testing.T) {
 		},
 		{
 			name:                "with error response",
-			jsonResponse:        errorResponseJson,
+			jsonResponse:        errorResponseJsonWithMessage,
 			statusCode:          http.StatusBadRequest,
 			expected:            nil,
 			expectedAPIResponse: expectedErrorAPIResponse,
@@ -375,7 +375,7 @@ func TestTransactionsService_ListPending(t *testing.T) {
 		},
 		{
 			name:                "with error response",
-			jsonResponse:        errorResponseJson,
+			jsonResponse:        errorResponseJsonWithMessage,
 			statusCode:          http.StatusBadRequest,
 			expected:            nil,
 			expectedAPIResponse: expectedErrorAPIResponse,

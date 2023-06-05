@@ -1,8 +1,12 @@
 package akahu
 
 import (
+	"context"
+	"net/http"
 	"testing"
 )
+
+const exchangeJson = "{ \"success\": true, \"access_token\": \"user_token_1111111111111111111111111\", \"token_type\": \"bearer\", \"scope\": \"IDENTITY_BASIC ACCOUNTS TRANSACTIONS\" }"
 
 func TestAuthService_BuildAuthorizationURL(t *testing.T) {
 	client := NewClient(nil, "app_token_123", "appsecret123", "https://example.com/auth/akahu")
@@ -48,6 +52,45 @@ func TestAuthService_BuildAuthorizationURL(t *testing.T) {
 			if actual := client.Auth.BuildAuthorizationURL(test.opts); actual != test.expected {
 				t.Errorf("expected %v, actual %v", test.expected, actual)
 			}
+		})
+	}
+}
+
+func TestAuthService_Exchange(t *testing.T) {
+	tests := []struct {
+		name                string
+		jsonResponse        string
+		statusCode          int
+		expected            *ExchangeResponse
+		expectedAPIResponse *APIResponse
+	}{
+		{
+			name:         "with success response",
+			jsonResponse: exchangeJson,
+			statusCode:   http.StatusOK,
+			expected: &ExchangeResponse{
+				AccessToken: "user_token_1111111111111111111111111",
+				TokenType:   "bearer",
+				Scope:       "IDENTITY_BASIC ACCOUNTS TRANSACTIONS",
+			},
+			expectedAPIResponse: expectedSuccessAPIResponse,
+		},
+		{
+			name:                "with error response",
+			jsonResponse:        errorResponseJsonWithError,
+			statusCode:          http.StatusBadRequest,
+			expected:            nil,
+			expectedAPIResponse: expectedErrorAPIResponse,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			client := setupClient(t, test.jsonResponse, http.MethodPost, test.statusCode)
+
+			actual, res, err := client.Auth.Exchange(context.TODO(), "code")
+			testClientResponse(t, test.expected, actual, err)
+			testClientAPIResponse(t, test.expectedAPIResponse, res, err)
 		})
 	}
 }

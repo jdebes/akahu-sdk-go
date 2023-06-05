@@ -49,7 +49,8 @@ type collectionResponse[T any] struct {
 
 type errorResponse struct {
 	successResponse
-	Message string `json:"message"`
+	Message *string `json:"message"`
+	Error   *string `json:"error"`
 }
 
 type APIResponse struct {
@@ -164,9 +165,16 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}) (*API
 		return nil, err
 	}
 
+	var message string
+	if errResp.Message != nil {
+		message = *errResp.Message
+	} else if errResp.Error != nil {
+		message = *errResp.Error
+	}
+
 	return &APIResponse{
 		Success:  errResp.Success,
-		Message:  errResp.Message,
+		Message:  message,
 		Response: res,
 	}, nil
 }
