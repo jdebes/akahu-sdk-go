@@ -80,6 +80,8 @@ func withBasicAuthRequestConfig() requestConfig {
 	}
 }
 
+// NewClient creates a new Akahu API client, which can then be used to make calls to the Akahu API for authorized users.
+// If a nil httpClient is provided, http.DefaultClient will be used.
 func NewClient(httpClient *http.Client, appIDToken, appSecret, redirectUri string) *Client {
 	if httpClient == nil {
 		httpClient = &http.Client{}
