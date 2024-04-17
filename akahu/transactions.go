@@ -65,14 +65,24 @@ type TransactionResponse struct {
 	Meta        *Meta           `json:"meta"`
 }
 
+// List gets a list of settled transactions within the 'start' and 'end' time range.
+//
+// Akahu docs: https://developers.akahu.nz/reference/get_transactions
 func (s *TransactionsService) List(ctx context.Context, userAccessToken string, startTime, endTime time.Time) ([]TransactionResponse, *APIResponse, error) {
 	return s.list(ctx, transactionsPath, userAccessToken, startTime, endTime)
 }
 
+// ListPending gets a list of pending transactions within the 'start' and 'end' time range.
+//
+// Akahu docs: https://developers.akahu.nz/reference/get_transactions-pending
 func (s *TransactionsService) ListPending(ctx context.Context, userAccessToken string, startTime, endTime time.Time) ([]TransactionResponse, *APIResponse, error) {
 	return s.list(ctx, path.Join(transactionsPath, pendingPath), userAccessToken, startTime, endTime)
 }
 
+// Get fetches an individual transaction from one of the user's connected accounts.
+// All returned dates are in UTC.
+//
+// Akahu docs: https://developers.akahu.nz/reference/get_transactions-id
 func (s *TransactionsService) Get(ctx context.Context, userAccessToken, id string) (*TransactionResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, path.Join(transactionsPath, id), nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
@@ -88,6 +98,10 @@ func (s *TransactionsService) Get(ctx context.Context, userAccessToken, id strin
 	return accounts.Item, res, nil
 }
 
+// GetByIds fetches a list of transactions from one of the user's connected accounts by Transaction ids.
+// All returned dates are in UTC.
+//
+// Akahu docs: https://developers.akahu.nz/reference/post_transactions-ids
 func (s *TransactionsService) GetByIds(ctx context.Context, userAccessToken string, ids ...string) ([]TransactionResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodPost, path.Join(transactionsPath, "ids"), ids, withTokenRequestConfig(userAccessToken))
 	if err != nil {
