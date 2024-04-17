@@ -41,6 +41,9 @@ type AuthorizationURLOptions struct {
 	State        *string
 }
 
+// Exchange Use this endpoint to exchange an Authorization Code for a User Access Token, which can be used to access the rest of this API.
+//
+// Akahu docs: https://developers.akahu.nz/reference/post_token
 func (s *AuthService) Exchange(ctx context.Context, code string) (*ExchangeResponse, *APIResponse, error) {
 	body := exchangeRequest{
 		GrantType:    authCode,
@@ -68,6 +71,9 @@ func (s *AuthService) Exchange(ctx context.Context, code string) (*ExchangeRespo
 	return &exchangeResponse, res, nil
 }
 
+// RevokeToken Revokes the User Access Token that is included in the Authorization header of the request.
+//
+// Akahu docs: https://developers.akahu.nz/reference/delete_token
 func (s *AuthService) RevokeToken(ctx context.Context, userAccessToken string) (bool, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodDelete, authPath, nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
@@ -83,6 +89,10 @@ func (s *AuthService) RevokeToken(ctx context.Context, userAccessToken string) (
 	return successResponse.Success, res, nil
 }
 
+// BuildAuthorizationURL Builds the URL that redirects the user to the Akahu authorization page.
+// This is the first step in the authorization flow.
+//
+// See the Authorizing with OAuth 2.0 guide for more information: https://developers.akahu.nz/docs/authorizing-with-oauth2.
 func (s *AuthService) BuildAuthorizationURL(options AuthorizationURLOptions) string {
 	var responseType string
 	if options.ResponseType == nil {
