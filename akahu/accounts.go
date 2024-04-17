@@ -48,6 +48,9 @@ type AccountResponse struct {
 	Type string `json:"type"`
 }
 
+// List gets a list of all accounts that the user has connected to your application.
+//
+// Akahu docs: https://developers.akahu.nz/reference/get_accounts
 func (s *AccountsService) List(ctx context.Context, userAccessToken string) ([]AccountResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, accountsPath, nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
@@ -63,6 +66,9 @@ func (s *AccountsService) List(ctx context.Context, userAccessToken string) ([]A
 	return accounts.Items, res, nil
 }
 
+// Get an individual account that the user has connected to your application.
+//
+// Akahu docs: https://developers.akahu.nz/reference/get_accounts-id
 func (s *AccountsService) Get(ctx context.Context, userAccessToken, ID string) (*AccountResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, path.Join(accountsPath, ID), nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
@@ -78,6 +84,9 @@ func (s *AccountsService) Get(ctx context.Context, userAccessToken, ID string) (
 	return accounts.Item, res, nil
 }
 
+// Revoke your application's access to one of the user's connected accounts and its associated data, including transactions.
+//
+// Akahu docs: https://developers.akahu.nz/reference/delete_accounts-id
 func (s *AccountsService) Revoke(ctx context.Context, userAccessToken, ID string) (bool, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodDelete, path.Join(accountsPath, ID), nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
