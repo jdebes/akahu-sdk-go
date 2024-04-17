@@ -18,6 +18,9 @@ type MeResponse struct {
 	PreferredName *string    `json:"preferred_name"`
 }
 
+// Get information about the Akahu user and the access they have provided.
+//
+// Akahu docs: https://developers.akahu.nz/reference/get_me
 func (s *MeService) Get(ctx context.Context, userAccessToken string) (*MeResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, "me", nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
