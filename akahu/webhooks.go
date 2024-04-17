@@ -22,6 +22,7 @@ const (
 	publicKeyPath     = "keys"
 )
 
+// WebhookType represents the types of webhooks that Akahu Supports.
 type WebhookType string
 
 const (
@@ -77,6 +78,9 @@ type WebHookEventResponse struct {
 	Payload      WebHookEventPayload `json:"payload"`
 }
 
+// List gets the active webhook subscriptions that your app has created for the user.
+//
+// Akahu docs: https://developers.akahu.nz/reference/get_webhooks
 func (s *WebhooksService) List(ctx context.Context, userAccessToken string) ([]WebhookResponse, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, webhooksPath, nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
@@ -92,6 +96,9 @@ func (s *WebhooksService) List(ctx context.Context, userAccessToken string) ([]W
 	return webhooks.Items, res, nil
 }
 
+// GetPublicKey gets one of the public keys that Akahu uses to sign webhooks.
+//
+// Akahu docs: https://developers.akahu.nz/reference/get_keys-id
 func (s *WebhooksService) GetPublicKey(ctx context.Context, id string) (*string, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodGet, path.Join(publicKeyPath, id), nil, withBasicAuthRequestConfig())
 	if err != nil {
@@ -107,6 +114,9 @@ func (s *WebhooksService) GetPublicKey(ctx context.Context, id string) (*string,
 	return publicKey.Item, res, nil
 }
 
+// ListEvents gets a list of webhook events that have been published to your application by Akahu within the 'start' and 'end' time range.
+//
+// Akahu docs: https://developers.akahu.nz/reference/get_webhook-events
 func (s *WebhooksService) ListEvents(ctx context.Context, userAccessToken, status string, startTime, endTime time.Time) ([]WebHookEventResponse, *APIResponse, error) {
 	params := paramsWithDateRange(startTime, endTime)
 	params.Add("status", status)
@@ -126,6 +136,9 @@ func (s *WebhooksService) ListEvents(ctx context.Context, userAccessToken, statu
 	return events.Items, res, nil
 }
 
+// Subscribe creates a new webhook subscription for the user.
+//
+// Akahu docs: https://developers.akahu.nz/reference/post_webhooks
 func (s *WebhooksService) Subscribe(ctx context.Context, userAccessToken string, body WebhookSubscribeRequest) (*string, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodPost, webhooksPath, body, withTokenRequestConfig(userAccessToken))
 	if err != nil {
@@ -141,6 +154,9 @@ func (s *WebhooksService) Subscribe(ctx context.Context, userAccessToken string,
 	return webhookSubscribe.ItemId, res, nil
 }
 
+// Unsubscribe deletes a webhook subscription that your application has previously created for the user.
+//
+// Akahu docs: https://developers.akahu.nz/reference/delete_webhooks-id
 func (s *WebhooksService) Unsubscribe(ctx context.Context, userAccessToken, id string) (bool, *APIResponse, error) {
 	r, err := s.client.newRequest(http.MethodDelete, path.Join(webhooksPath, id), nil, withTokenRequestConfig(userAccessToken))
 	if err != nil {
@@ -156,6 +172,11 @@ func (s *WebhooksService) Unsubscribe(ctx context.Context, userAccessToken, id s
 	return webhookDelete.Success, res, nil
 }
 
+// ValidateWebhookSignature validates the payload of a Akahu webhook request against private RSA key held by Akahu.
+// The public key can be obtained via the WebhooksService.GetPublicKey method.
+// The signature is a base64 encoded string that is included in the 'X-Akahu-Signature' header of the request.
+//
+// See the Webhooks reference for more information: https://developers.akahu.nz/docs/reference-webhooks.
 func ValidateWebhookSignature(publicKey, signature string, body []byte) (bool, error) {
 	block, _ := pem.Decode([]byte(publicKey))
 	if block == nil {
